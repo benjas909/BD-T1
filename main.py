@@ -151,46 +151,48 @@ def removeFav(id):
             if not select2:
                 print("TEST la cancion no está en reproducciones")
             else:
-                cursor.execute("""UPDATE reproduccion SET favorito=1 WHERE id=?""",id)
+                cursor.execute("""UPDATE reproduccion SET favorito=0 WHERE id=?""",id)
         case _:
             print("La cancion no ha sido eliminada.")
             
             
-            
-    
-    
-### esta mala esta wea, hay q arreglar lo q pasa cuando hay mas de una canción, y ver cuando actualizar en vez de volver a insertar
+        
 def playSong(Name):
-    cursor.execute("""SELECT * FROM repositorio_musica WHERE song_name=?""",Name)
     
+    cursor.execute("""SELECT * FROM repositorio_musica WHERE song_name=?""",Name)
     songs=cursor.fetchall()
+    
     if len(songs)>1:
         print("hay mas de una cancion con ese nombre")
         for song in songs:
-            print(song)
+            print(song)     
+        songnum=int(input("Escriba el numero de la canción"))-1
     else:
-        id=songs[0][0]
-        song_name=songs[0][3]
-        artist_name=songs[0][2]
+        songnum=0
         
+         
+    id=songs[songnum][0]
+    cursor.execute("""SELECT veces_reproducida FROM reproduccion WHERE id=?""",id)
+    aux=cursor.fetchone()
+    
+    if not aux:
+        song_name=songs[songnum][3]
+        artist_name=songs[songnum][2]
+        reprod=1
         
-        cursor.execute("""SELECT veces_reproducida FROM reproduccion WHERE id=?""",id)
-        aux=cursor.fetchone()
-        if aux is None:
-            reprod=0
-        else:
-            reprod=aux[0]+1
-        
-        
-        cursor.execute("""SELECT * FROM lista_favoritos WHERE id=?""",id)
+        cursor.execute("""SELECT id FROM lista_favoritos WHERE id=?""",id)
         aux2=cursor.fetchone()
         if aux2 is None:
             favorito=0
         else:
             favorito=1
-        
+            
         cursor.execute("""INSERT INTO reproduccion(id, song_name, artist_name, fecha_reproduccion, veces_reproducida, favorito) VALUES (?,?,?,GETDATE(),?,?)""",id,song_name,artist_name,reprod,favorito)
-        print("escuchando tururur")
+        
+    else:  
+        cursor.execute("""UPDATE reproduccion SET veces_reproducida=veces_reproducida + 1 WHERE id=?""",id)
+                       
+    print("escuchando tururur")
     
 """
 def searchSongInPlays(Name):
@@ -210,11 +212,14 @@ def searchAvgPlays(name):
 def main():
     initializeDB()
     loadIntoDB()
-    cancion=input("cancion: ")
-    playSong(cancion)
-    playSong(cancion)
-    playSong(cancion)
-    showPlays()
+    #cancion=input("cancion: ")
+    #playSong(cancion)
+    #makeFav(4782)
+    #showPlays()
+    #showFav()
+    #removeFav(4782)
+    #showPlays()
+    #showFav()
 
 if __name__ == "__main__":
     main()
