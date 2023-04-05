@@ -114,24 +114,44 @@ def showFav():
     else:
         print("No tienes ninguna cancion favorita")
 
-#### FAlta updatear en reproduccion
-def makeFav(id):
-    cursor.execute("""INSERT INTO lista_favoritos (id, song_name, artist_name, fecha_agregada) SELECT id, song_name, artist_name, GETDATE() FROM repositorio_musica WHERE id=?""",id)
-    print("Cancion agregada a favoritos")
-    
 
-#### FAlta updatear en reproduccion
+def makeFav(id):
+    cursor.execute("""SELECT id FROM lista_favoritos WHERE id=?""",id)
+    select=cursor.fetchone()
+    
+    if not select:
+        cursor.execute("""INSERT INTO lista_favoritos (id, song_name, artist_name, fecha_agregada) SELECT id, song_name, artist_name, GETDATE() FROM repositorio_musica WHERE id=?""",id)
+        print("Cancion agregada a favoritos")
+        
+        ##buscar en reproduccion y updatear
+        cursor.execute("""SELECT id FROM reproduccion WHERE id=?""",id)
+        select2=cursor.fetchone()
+        if not select2:
+            print("TEST la cancion no está en reproducciones")
+        else:
+            cursor.execute("""UPDATE reproduccion SET favorito=1 WHERE id=?""",id)
+        
+    else:
+        print("La cancion ya esta en favoritos")
+
+
 def removeFav(id):
     cursor.execute("""SELECT * FROM lista_favoritos WHERE id=?""",id)
     print("Estás apunto de eliminar de tus favoritos la cancion:")
     print(cursor.fetchone())
-    
+
     selection=input("Para confirmar escriba SI ")
-    
     match selection:
         case "SI":
             cursor.execute("""DELETE FROM lista_favoritos WHERE id=?""",id)
             print("Cancion eliminada de favoritos")
+            
+            cursor.execute("""SELECT id FROM reproduccion WHERE id=?""",id)
+            select2=cursor.fetchone()
+            if not select2:
+                print("TEST la cancion no está en reproducciones")
+            else:
+                cursor.execute("""UPDATE reproduccion SET favorito=1 WHERE id=?""",id)
         case _:
             print("La cancion no ha sido eliminada.")
             
