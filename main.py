@@ -2,7 +2,7 @@ import pyodbc as odbc
 
 try:
     connection = odbc.connect(
-        "DRIVER={SQL SERVER};SERVER=Benjas\SQLEXPRESS;Trusted_Connection=yes",
+        "DRIVER={SQL SERVER};SERVER=pipe\SQLEXPRESS01;Trusted_Connection=yes",
         autocommit=True,
     )
 
@@ -35,6 +35,7 @@ def initializeDB():
             song_name VARCHAR(50),
             artist_name VARCHAR(50),
             fecha_reproduccion DATE,
+            veces_reproducida INT,
             favorito BIT
         )"""
     )
@@ -84,10 +85,78 @@ def loadIntoDB():
     return
 
 
+def showPlays():
+    print("1) Ordenar por fecha")
+    print("2) Ordenar por reproducciones")
+    
+    type=input()
+    
+    match type:
+        case 1:
+            cursor.execute("""SELECT * FROM reproduccion ORDER BY fecha_reproduccion DESC""")
+        case 2:
+            cursor.execute("""SELECT * FROM reproduccion ORDER BY veces_reproducida DESC""")
+ 
+ 
+def showFav():
+    cursor.execute("""SELECT * FROM lista_favoritos""")
+    rows=cursor.fetchall()
+    if len(rows)>0:
+        print("Canciones favoritas:")
+        for row in rows:
+            print(row)
+    else:
+        print("No tienes ninguna cancion favorita")
+
+
+def makeFav(id):
+    cursor.execute("""INSERT INTO lista_favoritos (id, song_name, artist_name, fecha_agregada) SELECT id, song_name, artist_name, GETDATE() FROM repositorio_musica WHERE id=?""",id)
+    print("Cancion agregada a favoritos")
+    
+
+def removeFav(id):
+    cursor.execute("""SELECT * FROM lista_favoritos WHERE id=?""",id)
+    print("Estás apunto de eliminar de tus favoritos la cancion:")
+    print(cursor.fetchone())
+    
+    selection=input("Para confirmar escriba SI ")
+    
+    match selection:
+        case "SI":
+            cursor.execute("""DELETE FROM lista_favoritos WHERE id=?""",id)
+            print("Cancion eliminada de favoritos")
+        case _:
+            print("La cancion no ha sido eliminada.")
+            
+    
+    
+"""
+def playSong(Name):
+
+def searchSongInPlays(Name):
+
+def showSongLastDays(Days):
+
+def searchSongArtist(Name):
+
+def searchTop15():
+
+def searchPeakPos(name):
+
+def searchAvgPlays(name):
+    
+"""
+
 def main():
     initializeDB()
     loadIntoDB()
-
+    
+    makeFav(1)
+    showFav()
+    removeFav(1)
+    
+    showFav()
+    
 
 if __name__ == "__main__":
     main()
