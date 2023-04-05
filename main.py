@@ -172,7 +172,7 @@ def playSong(Name):
         
          
     id=songs[songnum][0]
-    cursor.execute("""SELECT veces_reproducida FROM reproduccion WHERE id=?""",id)
+    cursor.execute("""SELECT id FROM reproduccion WHERE id=?""",id)
     aux=cursor.fetchone()
     
     if not aux:
@@ -194,9 +194,18 @@ def playSong(Name):
                        
     print("escuchando tururur")
     
-"""
-def searchSongInPlays(Name):
 
+def searchSongInPlays(Name):
+    cursor.execute("""SELECT * FROM reproducciones WHERE song_name=?""",Name)
+    songs=cursor.fetchall()
+    if len(songs)>1:
+        print("hay mas de una cancion con ese nombre")
+        for song in songs:
+            print(song)     
+    else:
+        print(songs)
+
+"""
 def showSongLastDays(Days):
 
 def searchSongArtist(Name):
