@@ -158,52 +158,50 @@ def removeFav(id):
             
         
 def playSong(Name):
-    
     cursor.execute("""SELECT * FROM repositorio_musica WHERE song_name=?""",Name)
     songs=cursor.fetchall()
-    
-    if len(songs)>1:
-        print("hay mas de una cancion con ese nombre")
-        for song in songs:
-            print(song)     
-        songnum=int(input("Escriba el numero de la canción"))-1
-    else:
-        songnum=0
+    if len(songs)!=0:
         
-         
-    id=songs[songnum][0]
-    cursor.execute("""SELECT id FROM reproduccion WHERE id=?""",id)
-    aux=cursor.fetchone()
-    
-    if not aux:
-        song_name=songs[songnum][3]
-        artist_name=songs[songnum][2]
-        reprod=1
-        
-        cursor.execute("""SELECT id FROM lista_favoritos WHERE id=?""",id)
-        aux2=cursor.fetchone()
-        if aux2 is None:
-            favorito=0
+        if len(songs)>1:
+            print("hay mas de una cancion con ese nombre")
+            for song in songs:
+                print(song)     
+            songnum=int(input("Escriba el numero de la canción"))-1
         else:
-            favorito=1
-            
-        cursor.execute("""INSERT INTO reproduccion(id, song_name, artist_name, fecha_reproduccion, veces_reproducida, favorito) VALUES (?,?,?,GETDATE(),?,?)""",id,song_name,artist_name,reprod,favorito)
-        
-    else:  
-        cursor.execute("""UPDATE reproduccion SET veces_reproducida=veces_reproducida + 1 WHERE id=?""",id)
-                       
-    print("escuchando tururur")
+            songnum=0
+
+        id=songs[songnum][0]
+        cursor.execute("""SELECT id FROM reproduccion WHERE id=?""",id)
+        aux=cursor.fetchone()
+
+        if not aux:
+            song_name=songs[songnum][3]
+            artist_name=songs[songnum][2]
+            reprod=1
+            cursor.execute("""SELECT id FROM lista_favoritos WHERE id=?""",id)
+            aux2=cursor.fetchone()
+            if aux2 is None:
+                favorito=0
+            else:
+                favorito=1
+
+            cursor.execute("""INSERT INTO reproduccion(id, song_name, artist_name, fecha_reproduccion, veces_reproducida, favorito) VALUES (?,?,?,GETDATE(),?,?)""",id,song_name,artist_name,reprod,favorito)
+        else:  
+            cursor.execute("""UPDATE reproduccion SET veces_reproducida=veces_reproducida + 1 WHERE id=?""",id)
+
+        print("escuchando tururur")
+    else:
+        print("cancion no encontrada")
     
 
 def searchSongInPlays(Name):
-    cursor.execute("""SELECT * FROM reproducciones WHERE song_name=?""",Name)
+    cursor.execute("""SELECT * FROM reproduccion WHERE song_name=?""",Name)
     songs=cursor.fetchall()
-    if len(songs)>1:
-        print("hay mas de una cancion con ese nombre")
+    if songs:
         for song in songs:
             print(song)     
     else:
-        print(songs)
+        print("No se encuentra esa cancion")
 
 """
 def showSongLastDays(Days):
@@ -221,14 +219,12 @@ def searchAvgPlays(name):
 def main():
     initializeDB()
     loadIntoDB()
-    #cancion=input("cancion: ")
-    #playSong(cancion)
-    #makeFav(4782)
-    #showPlays()
-    #showFav()
-    #removeFav(4782)
-    #showPlays()
-    #showFav()
+    cancion=input("cancion: ")
+    playSong(cancion)
+    cancion=input("cancion: ")
+    playSong(cancion)
+    cancion=input("buscar: ")
+    searchSongInPlays(cancion)
 
 if __name__ == "__main__":
     main()
