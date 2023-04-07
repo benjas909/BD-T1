@@ -3,12 +3,12 @@ import pyodbc as odbc
 try:
     usr = int(input("¿Quién está usando el programa?\n(1)Pipes \n(2)Benjas\n"))
     if usr == 1:
-        usrStr = "pipe\SQLEXPRESS01"
+        USR_STR = "pipe\SQLEXPRESS01"
     elif usr == 2:
-        usrStr = "Benjas\SQLEXPRESS"
+        USR_STR = "Benjas\SQLEXPRESS"
 
     connection = odbc.connect(
-        f"DRIVER={{SQL SERVER}};SERVER={usrStr};Trusted_Connection=yes",
+        f"DRIVER={{SQL SERVER}};SERVER={USR_STR};Trusted_Connection=yes",
         autocommit=True,
     )
 
@@ -37,7 +37,7 @@ def initializeDB():
     )
     cursor.execute(
         """CREATE TABLE reproduccion (
-            id INT FOREIGN KEY REFERENCES repositorio_musica(id),
+            id INT NOT NULL PRIMARY KEY,
             song_name VARCHAR(50),
             artist_name VARCHAR(50),
             fecha_reproduccion DATE,
@@ -48,7 +48,7 @@ def initializeDB():
 
     cursor.execute(
         """CREATE TABLE lista_favoritos (
-            id INT FOREIGN KEY REFERENCES repositorio_musica(id),
+            id INT NOT NULL PRIMARY KEY,
             song_name VARCHAR(50),
             artist_name VARCHAR(50),
             fecha_agregada DATE
@@ -90,6 +90,19 @@ def loadIntoDB():
     return
 
 
+def startMenu():
+    print("Bienvenido a spotUSM.\nMenu:")
+    print("\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas\n\t3)Buscar canción")
+    choice = input("Ingrese una opción: ")
+    match choice:
+        case '1':
+            showPlays()
+        case '2':
+            showFav()
+        case '3':
+            playSong()
+
+
 def showPlays():
     print("1) Ordenar por fecha")
     print("2) Ordenar por reproducciones")
@@ -109,6 +122,19 @@ def showPlays():
             songs = cursor.fetchall()
             for song in songs:
                 print(str(i) + ')', song[2], '-', song[3])
+    
+    if not songs:
+        print("Lista vacía.")
+
+    print("Acciones Rápidas: 1)Buscar en la lista  2)Volver al menú principal")
+    choice = input("Acción")
+    match choice:
+        case '1':
+            Name = input("Nombre de la canción: ")
+            searchSongInPlays(Name)
+        case '2':
+            startMenu()
+
 
 def showFav():
     cursor.execute("""SELECT * FROM lista_favoritos""")
@@ -126,7 +152,7 @@ def makeFav(songID):
     select = cursor.fetchone()
     
     if not select:
-        cursor.execute("""INSERT INTO lista_favoritos (id, song_name, artist_name, fecha_agregada) SELECT id, song_name, artist_name, GETDATE() FROM repositorio_musica WHERE id=?""",id)
+        cursor.execute("""INSERT INTO lista_favoritos (id, song_name, artist_name, fecha_agregada) SELECT id, song_name, artist_name, GETDATE() FROM repositorio_musica WHERE id=?""",songID)
         print("Cancion agregada a favoritos.")
         
         ##buscar en reproduccion y updatear
@@ -138,7 +164,13 @@ def makeFav(songID):
             cursor.execute("""UPDATE reproduccion SET favorito=1 WHERE id=?""",songID)
         
     else:
-        print("La cancion ya esta en favoritos.")
+        print("La cancion ya esta en favoritos. ¿Desea quitarla?")
+        rem = input("1)Sí, 2)No\n>")
+        if rem == 1:
+            removeFav(songID)
+        else:
+            "No hubo cambios."
+    startMenu()
 
 
 def removeFav(songID):
@@ -161,10 +193,10 @@ def removeFav(songID):
         case _:
             print("La cancion no ha sido eliminada.")
             
-            
-        
-def playSong(Name):
-    cursor.execute("""SELECT * FROM repositorio_musica WHERE song_name=?""", Name)
+   
+def playSong():
+    name = input("Nombre de la canción: ")
+    cursor.execute("""SELECT * FROM repositorio_musica WHERE song_name=?""", name)
     songs = cursor.fetchall()
     if len(songs) != 0:
         
@@ -203,6 +235,14 @@ def playSong(Name):
             cursor.execute("""UPDATE reproduccion SET veces_reproducida=veces_reproducida + 1 WHERE id=?""",songID)
 
         print("escuchando tururur")
+
+        print("Acciones Rápidas: 1)Agregar a favoritos  2)Volver al menú principal")
+        choice = input("Acción: ")
+        match choice:
+            case '1':
+                makeFav(songID)
+            case '2':
+                startMenu()
     else:
         print("cancion no encontrada")
     
@@ -236,12 +276,11 @@ def main():
     initializeDB()
     print("Inicializando...")
     loadIntoDB()
-    cancion = input("cancion: ")
-    playSong(cancion)
-    cancion = input("cancion: ")
-    playSong(cancion)
-    cancion = input("buscar: ")
-    searchSongInPlays(cancion)
+    startMenu()
+    # playSong()
+    # cancion = input("buscar: ")
+    # searchSongInPlays(cancion)
+
 
 if __name__ == "__main__":
     main()
