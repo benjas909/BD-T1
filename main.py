@@ -100,7 +100,8 @@ def startMenu():
         case '2':
             showFav()
         case '3':
-            playSong()
+            songID = searchSong()
+            playSong(songID)
 
 
 def showPlays():
@@ -169,7 +170,7 @@ def makeFav(songID):
         if rem == 1:
             removeFav(songID)
         else:
-            "No hubo cambios."
+            print("No hubo cambios.")
     startMenu()
 
 
@@ -194,32 +195,34 @@ def removeFav(songID):
             print("La cancion no ha sido eliminada.")
             
    
-def playSong():
-    name = input("Nombre de la canción: ")
-    cursor.execute("""SELECT * FROM repositorio_musica WHERE song_name=?""", name)
-    songs = cursor.fetchall()
-    if len(songs) != 0:
+def playSong(songID):
+    # name = input("Nombre de la canción: ")
+    # cursor.execute("""SELECT * FROM repositorio_musica WHERE song_name=?""", name)
+    # songs = cursor.fetchall()
+    # if len(songs) != 0:
         
-        if len(songs) > 1:
-            print("hay mas de una cancion con ese nombre")
-            i = 1
-            for song in songs:
-                # print(song)
-                print(str(i) + ')', song[2], '-', song[3]) 
-                i += 1    
-            songnum = int(input("Escriba el numero de la canción: ")) - 1
-        else:
-            songnum = 0
+    #     if len(songs) > 1:
+    #         print("hay mas de una cancion con ese nombre")
+    #         i = 1
+    #         for song in songs:
+    #             # print(song)
+    #             print(str(i) + ')', song[2], '-', song[3]) 
+    #             i += 1    
+    #         songnum = int(input("Escriba el numero de la canción: ")) - 1
+    #     else:
+    #         songnum = 0
 
-        songID = songs[songnum][0]
+    #     songID = songs[songnum][0]
         cursor.execute("""SELECT id FROM reproduccion WHERE id=?""",songID)
         aux = cursor.fetchone()
         # print(aux, 'hola')
 
         if not aux:
+            cursor.execute("""SELECT * FROM repositorio_musica WHERE id=?""", songID)
             # print(songs[songnum])
-            song_name = songs[songnum][3]
-            artist_name = songs[songnum][2]
+            song = cursor.fetchone()
+            song_name = song[3]
+            artist_name = song[2]
             # print(artist_name)
             reprod = 1
             cursor.execute("""SELECT id FROM lista_favoritos WHERE id=?""",songID)
@@ -234,7 +237,7 @@ def playSong():
         else:  
             cursor.execute("""UPDATE reproduccion SET veces_reproducida=veces_reproducida + 1 WHERE id=?""",songID)
 
-        print("escuchando tururur")
+        print("Reproduciendo...")
 
         print("Acciones Rápidas: 1)Agregar a favoritos  2)Volver al menú principal")
         choice = input("Acción: ")
@@ -243,19 +246,69 @@ def playSong():
                 makeFav(songID)
             case '2':
                 startMenu()
-    else:
-        print("cancion no encontrada")
+    # else:
+    #     print("cancion no encontrada")
     
+
+def searchSong():
+    mode = input("1) Buscar por nombre de canción.\n2)Buscar por artista.\nIngrese una opción: ")
+    match mode:
+        case '1':
+            name = input("Nombre de la canción: ")
+            cursor.execute("""SELECT * FROM repositorio_musica WHERE song_name=?""", name)
+            songs = cursor.fetchall()
+            if len(songs) != 0:
+                
+                if len(songs) > 1:
+                    print("hay mas de una cancion con ese nombre")
+                    i = 1
+                    for song in songs:
+                        # print(song)
+                        print(str(i) + ')', song[2], '-', song[3]) 
+                        i += 1    
+                    songnum = int(input("Escriba el numero de la canción: ")) - 1
+                else:
+                    songnum = 0
+
+                songID = songs[songnum][0]
+        case '2':
+            artist = input("Nombre del artista: ")
+            cursor.execute("""SELECT * FROM repositorio_musica WHERE artist_name=?""", artist)
+            songs = cursor.fetchall()
+            if len(songs):
+                i = 1
+                for song in songs:
+                    # print(song)
+                    print(str(i) + ')', song[2], '-', song[3]) 
+                    i += 1    
+                songnum = int(input("Escriba el numero de la canción: ")) - 1
+                print("Canción seleccionada.")
+                songID = songs[songnum][0]
+            else:
+                print("No se encuentra el artista.")
+                searchSong()
+    return songID
+
+
+
 
 def searchSongInPlays(Name):
     cursor.execute("""SELECT * FROM reproduccion WHERE song_name=?""",Name)
     songs = cursor.fetchall()
     if songs:
         i = 1
+        print("   Nombre   |   Artista   |   Fecha primera rep.   |   Veces reproducida   |")
         for song in songs:
-            # print(song)
-            print(str(i) + ')', song[2], '-', song[1]) 
-            i += 1    
+            print(song)
+            print(str(i) + ')', song[2], '|', song[1], '|', song[3], '|', song[4]) 
+            i += 1
+        # print("Acciones Rápidas: 1)Agregar a favoritos  2)Volver al menú principal")
+        # choice = input("Acción: ")
+        # match choice:
+        #     case '1':
+                
+        #     case '2':
+        #         startMenu()
     else:
         print("No se encuentra esa cancion.")
 
