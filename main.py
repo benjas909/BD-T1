@@ -92,7 +92,7 @@ def loadIntoDB():
 
 def startMenu():
     print("Bienvenido a spotUSM.\nMenu:")
-    print("\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas\n\t3)Buscar canción")
+    print("\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas.\n\t3)Buscar canción.\n\t4)Escuchadas en los ultimos dias.\n\t5)TOP 15 TEST. \n\t6)posicion peak \n\t7)promedio streams")
     choice = input("Ingrese una opción: ")
     match choice:
         case '1':
@@ -102,6 +102,18 @@ def startMenu():
         case '3':
             songID = searchSong()
             playSong(songID)
+        case '4':
+            days=input("Cuantos dias? ")
+            showSongLastDays(days)
+        case '5':
+            searchTop15()
+        case '6':
+            name=input("Nombre artista ")
+            searchPeakPos(name)
+        case '7':
+            name=input("Nombre artista ")
+            searchAvgPlays(name) 
+        
 
 
 def showPlays():
@@ -117,12 +129,12 @@ def showPlays():
             cursor.execute("""SELECT * FROM reproduccion ORDER BY fecha_reproduccion DESC""")
             songs = cursor.fetchall()
             for song in songs:
-                print(str(i) + ')', song[2], '-', song[3])
+                print(str(i) + ')', song[1], '-', song[2], '-', song[3])
         case "2":   
             cursor.execute("""SELECT * FROM reproduccion ORDER BY veces_reproducida DESC""")
             songs = cursor.fetchall()
             for song in songs:
-                print(str(i) + ')', song[2], '-', song[3])
+                print(str(i) + ')', song[1], '-', song[2],'-', song[4])
     
     if not songs:
         print("Lista vacía.")
@@ -251,14 +263,13 @@ def playSong(songID):
     
 
 def searchSong():
-    mode = input("1) Buscar por nombre de canción.\n2)Buscar por artista.\nIngrese una opción: ")
+    mode = input("1)Buscar por nombre de canción.\n2)Buscar por artista.\nIngrese una opción: ")
     match mode:
         case '1':
             name = input("Nombre de la canción: ")
             cursor.execute("""SELECT * FROM repositorio_musica WHERE song_name=?""", name)
             songs = cursor.fetchall()
             if len(songs) != 0:
-                
                 if len(songs) > 1:
                     print("hay mas de una cancion con ese nombre")
                     i = 1
@@ -269,8 +280,11 @@ def searchSong():
                     songnum = int(input("Escriba el numero de la canción: ")) - 1
                 else:
                     songnum = 0
-
                 songID = songs[songnum][0]
+            else:
+                print("No se encuentra la cancion.")
+                songID=searchSong()
+                
         case '2':
             artist = input("Nombre del artista: ")
             cursor.execute("""SELECT * FROM repositorio_musica WHERE artist_name=?""", artist)
@@ -278,15 +292,17 @@ def searchSong():
             if len(songs):
                 i = 1
                 for song in songs:
-                    # print(song)
                     print(str(i) + ')', song[2], '-', song[3]) 
                     i += 1    
                 songnum = int(input("Escriba el numero de la canción: ")) - 1
-                print("Canción seleccionada.")
                 songID = songs[songnum][0]
+                
+                print("Canción seleccionada.")
+                
+            
             else:
                 print("No se encuentra el artista.")
-                searchSong()
+                songID=searchSong()
     return songID
 
 
@@ -299,8 +315,8 @@ def searchSongInPlays(Name):
         i = 1
         print("   Nombre   |   Artista   |   Fecha primera rep.   |   Veces reproducida   |")
         for song in songs:
-            print(song)
-            print(str(i) + ')', song[2], '|', song[1], '|', song[3], '|', song[4]) 
+            
+            print(str(i) + ')', song[1], '|', song[2], '|', song[3], '|', song[4]) 
             i += 1
         # print("Acciones Rápidas: 1)Agregar a favoritos  2)Volver al menú principal")
         # choice = input("Acción: ")
@@ -312,18 +328,40 @@ def searchSongInPlays(Name):
     else:
         print("No se encuentra esa cancion.")
 
-"""
-def showSongLastDays(Days):
 
-def searchSongArtist(Name):
+def showSongLastDays(Days):
+    cursor.execute("""SELECT * FROM reproduccion WHERE fecha_reproduccion >= DATEADD(day, -?, GETDATE())""",int(Days))
+    songs=cursor.fetchall()
+    if len(songs)>=1:
+        i=1
+        print("   Nombre   |   Artista   |   Fecha primera rep.   |   Veces reproducida   |")
+        for song in songs:
+            print(str(i) + ')', song[1], '|', song[2], '|', song[3], '|', song[4]) 
+            i += 1
+    else: 
+        print("no hay cansione lol douu")
+    
+
 
 def searchTop15():
+    cursor.execute("""CREATE VIEW sumtop10 AS SELECT artist_name,SUM(top_10) as timesintop10 FROM repositorio_musica GROUP BY artist_name""")
+    cursor.execute("""SELECT TOP 10 * FROM sumtop10 ORDER By timesintop10 DESC""")
+    top= cursor.fetchall()
+    i=1
+    for artist in top:
+        print(str(i) + ')', artist[0],'-',artist[1]) 
+        i += 1
+        
 
 def searchPeakPos(name):
+    #CHECKEAR SI EL NOMBRE EXISTE
+    cursor.execute("""SELECT MIN(peak_position), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""",name)
+    print(cursor.fetchall())
+    
 
 def searchAvgPlays(name):
-    
-"""
+    cursor.execute("""SELECT AVG(total_streams), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""",name)
+    print(cursor.fetchall())
 
 def main():
     initializeDB()
