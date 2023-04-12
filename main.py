@@ -355,12 +355,12 @@ def searchTop15():
 
 def searchPeakPos(name):
     #CHECKEAR SI EL NOMBRE EXISTE
-    cursor.execute("""SELECT MIN(peak_position), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""",name)
+    cursor.execute("""SELECT MIN(peak_position), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""" ,name)
     print(cursor.fetchall())
     
 
 def searchAvgPlays(name):
-    cursor.execute("""SELECT AVG(total_streams), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""",name)
+    cursor.execute("""SELECT AVG(CAST (total_streams AS BIGINT)), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""",name)
     print(cursor.fetchall())
 
 def main():
