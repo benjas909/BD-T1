@@ -5,7 +5,7 @@ try:
     while LOOP:
         usr = int(
             input(
-                "¿Quién está usando el programa?\n(1)Pipes \n(2)Benjas\n(3)Otro (UNTESTED)"
+                "¿Quién está usando el programa?\n(1)Pipes \n(2)Benjas\n(3)Otro (UNTESTED)\n"
             )
         )
         if usr == 1:
@@ -36,6 +36,7 @@ def initializeDB():
     row = [item for i in rowAux for item in i]
     if "spotUSM" not in row:
         cursor.execute("CREATE DATABASE spotUSM")
+        cursor.execute("USE spotUSM")
         cursor.execute(
             """CREATE TABLE repositorio_musica (
             id INT NOT NULL PRIMARY KEY,
@@ -108,44 +109,57 @@ def loadIntoDB():
 
 
 def startMenu():
-    print("Menu:")
-    print(
-        """\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas.\n\t3)Buscar canción.\n\t4)Escuchadas en los ultimos dias.\n\t5)TOP 15 TEST.\n\t6)posicion peak \n\t7)promedio streams"""
-    )
-    choice = input("Ingrese una opción: ")
-    match choice:
-        case "1":
-            showPlays()
-        case "2":
-            showFav()
-        case "3":
-            songID = searchSong()
-            loop = True
-            while loop:
-                inp = input(
-                    "¿Qué desea hacer?\n\t1)Reproducir.\n\t2)Agregar/Quitar de favoritos."
-                )
-                match inp:
-                    case "1":
-                        loop = False
-                        playSong(songID)
-                    case "2":
-                        loop = False
-                        makeFav(songID)
-                    case other:
-                        print("Opción inválida.")
+    while True:
+        print("Menu:")
+        print(
+            """\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas.\n\t3)Buscar canción.\n\t4)Escuchadas en los ultimos dias.\n\t5)TOP 15 TEST.\n\t6)posicion peak \n\t7)promedio streams \n\t8)Salir"""
+        )
+        choice = input("Ingrese una opción: ")
+        match choice:
+            case "1":
+                showPlays()
+            case "2":
+                showFav()
+            case "3":
+                songID = searchSong()
+                loop = True
+                while loop:
+                    inp = input(
+                        "¿Qué desea hacer?\n\t1)Reproducir.\n\t2)Agregar/Quitar de favoritos."
+                    )
+                    match inp:
+                        case "1":
+                            loop = False
+                            playSong(songID)
+                        case "2":
+                            loop = False
+                            makeFav(songID)
+                        case other:
+                            print("Opción inválida.")
 
-        case "4":
-            days = input("Cuantos dias? ")
-            showSongLastDays(days)
-        case "5":
-            searchTop15()
-        case "6":
-            name = input("Nombre artista ")
-            searchPeakPos(name)
-        case "7":
-            name = input("Nombre artista ")
-            searchAvgPlays(name)
+            case "4":
+                days = input("Cuantos dias? ")
+                showSongLastDays(days)
+            case "5":
+                searchTop15()
+            case "6":
+                name = input("Nombre artista ")
+                searchPeakPos(name)
+            case "7":
+                name = input("Nombre artista ")
+                searchAvgPlays(name)
+            case "8":
+                while True:
+                    close = input("\t¿Cerrar Sesión?\n\t[Y/N]\n")
+                    if close == "Y" or close == "y":
+                        return
+                    elif close == "N" or close == "n":
+                        break
+                    else:
+                        continue
+            case other:
+                print("Opción Inválida.")
+                continue
 
 
 def showPlays():
@@ -174,14 +188,19 @@ def showPlays():
     if not songs:
         print("Lista vacía.")
 
-    print("Acciones Rápidas: 1)Buscar en la lista  2)Volver al menú principal")
-    choice = input("Acción")
-    match choice:
-        case "1":
-            Name = input("Nombre de la canción: ")
-            searchSongInPlays(Name)
-        case "2":
-            startMenu()
+    while True:
+        print("Acciones Rápidas: 1)Buscar en la lista  2)Volver al menú principal")
+        choice = input("Acción: ")
+        match choice:
+            case "1":
+                Name = input("Nombre de la canción: ")
+                searchSongInPlays(Name)
+                break
+            case "2":
+                startMenu()
+                break
+            case other:
+                continue
 
 
 def showFav():
@@ -190,9 +209,16 @@ def showFav():
     if len(rows) > 0:
         print("Canciones favoritas: ")
         for row in rows:
-            print(row)
+            print("\t", row[2], "-", row[1])
     else:
         print("No tienes ninguna cancion favorita")
+    print("Acciones Rápidas: 1)Buscar una canción  2)Volver al menú principal")
+    choice = input("Acción: ")
+    match choice:
+        case "1":
+            searchSong()
+        case "2":
+            startMenu()
 
 
 def makeFav(songID):
@@ -315,52 +341,51 @@ def playSong(songID):
 
 
 def searchSong():
-    mode = input(
-        "1)Buscar por nombre de canción.\n2)Buscar por artista.\nIngrese una opción: "
-    )
-    match mode:
-        case "1":
-            name = input("Nombre de la canción: ")
-            cursor.execute(
-                """SELECT * FROM repositorio_musica WHERE song_name=?""", name
-            )
-            songs = cursor.fetchall()
-            if len(songs) != 0:
-                if len(songs) > 1:
-                    print("hay mas de una cancion con ese nombre")
+    loop = True
+    while True:
+        mode = input(
+            "1)Buscar por nombre de canción.\n2)Buscar por artista.\nIngrese una opción: "
+        )
+        match mode:
+            case "1":
+                name = input("Nombre de la canción: ")
+                cursor.execute(
+                    """SELECT * FROM repositorio_musica WHERE song_name=?""", name
+                )
+                songs = cursor.fetchall()
+                if len(songs) != 0:
+                    if len(songs) > 1:
+                        print("hay mas de una cancion con ese nombre")
+                        i = 1
+                        for song in songs:
+                            # print(song)
+                            print(str(i) + ")", song[2], "-", song[3])
+                            i += 1
+                        songnum = int(input("Escriba el numero de la canción: ")) - 1
+                    else:
+                        songnum = 0
+                    return songs[songnum][0]
+
+                else:
+                    print("No se encuentra la cancion.")
+
+            case "2":
+                artist = input("Nombre del artista: ")
+                cursor.execute(
+                    """SELECT * FROM repositorio_musica WHERE artist_name=?""", artist
+                )
+                songs = cursor.fetchall()
+                if len(songs):
                     i = 1
                     for song in songs:
-                        # print(song)
                         print(str(i) + ")", song[2], "-", song[3])
                         i += 1
                     songnum = int(input("Escriba el numero de la canción: ")) - 1
+                    print("Canción seleccionada.")
+                    return songs[songnum][0]
+
                 else:
-                    songnum = 0
-                songID = songs[songnum][0]
-            else:
-                print("No se encuentra la cancion.")
-                songID = searchSong()
-
-        case "2":
-            artist = input("Nombre del artista: ")
-            cursor.execute(
-                """SELECT * FROM repositorio_musica WHERE artist_name=?""", artist
-            )
-            songs = cursor.fetchall()
-            if len(songs):
-                i = 1
-                for song in songs:
-                    print(str(i) + ")", song[2], "-", song[3])
-                    i += 1
-                songnum = int(input("Escriba el numero de la canción: ")) - 1
-                songID = songs[songnum][0]
-
-                print("Canción seleccionada.")
-
-            else:
-                print("No se encuentra el artista.")
-                songID = searchSong()
-    return songID
+                    print("No se encuentra el artista.")
 
 
 def searchSongInPlays(Name):
@@ -435,12 +460,7 @@ def searchAvgPlays(name):
 def main():
     initializeDB()
     print("Bienvenido a spotUSM!")
-    # print("Inicializando...")
-    # loadIntoDB()
     startMenu()
-    # playSong()
-    # cancion = input("buscar: ")
-    # searchSongInPlays(cancion)
 
 
 if __name__ == "__main__":
