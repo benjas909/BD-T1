@@ -345,7 +345,7 @@ def showSongLastDays(Days):
 
 def searchTop15():
     cursor.execute("""CREATE VIEW sumtop10 AS SELECT artist_name,SUM(top_10) as timesintop10 FROM repositorio_musica GROUP BY artist_name""")
-    cursor.execute("""SELECT TOP 10 * FROM sumtop10 ORDER By timesintop10 DESC""")
+    cursor.execute("""SELECT TOP 15 * FROM sumtop10 ORDER By timesintop10 DESC""")
     top= cursor.fetchall()
     i=1
     for artist in top:
