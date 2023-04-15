@@ -246,7 +246,16 @@ def showPlays():
             )
             songs = cursor.fetchall()
             for song in songs:
-                print(str(i) + ")", song[1], "-", song[2], "-", song[3])
+                if song[5]:
+                    favStr = "Está en favoritos."
+                else:
+                    favStr = "No está en favoritos."
+
+                print(
+                    f"{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+                )
+                i += 1
+
         case "2":
             while True:
                 order = input("\t1)Orden ascendiente\n\t2)Orden descendiente\n> ")
@@ -265,7 +274,15 @@ def showPlays():
             )
             songs = cursor.fetchall()
             for song in songs:
-                print(str(i) + ")", song[1], "-", song[2], "-", song[4])
+                if song[5]:
+                    favStr = "Está en favoritos."
+                else:
+                    favStr = "No está en favoritos."
+
+                print(
+                    f"{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+                )
+                i += 1
 
     if not songs:
         print("Lista vacía.")
@@ -279,8 +296,7 @@ def showPlays():
                 searchSongInPlays(Name)
                 break
             case "2":
-                startMenu()
-                break
+                return
             case other:
                 continue
     return
@@ -288,6 +304,9 @@ def showPlays():
 
 # listo
 def showFav():
+    """
+    Muestra las canciones favoritas del usuario.
+    """
     cursor.execute("""SELECT * FROM lista_favoritos""")
     rows = cursor.fetchall()
     if len(rows) > 0:
@@ -308,6 +327,17 @@ def showFav():
 
 # listo
 def makeFav(songID):
+    """
+    Permite agregar una canción a la lista de favoritos.
+
+    En caso de que la canción ya esté en la lista, da la opción de quitarla. Además, actualiza la tabla reproducciones.
+
+    Parameters
+    ----------
+    songID : int
+        ID de la canción a agregar.
+
+    """
     cursor.execute("""SELECT id FROM lista_favoritos WHERE id=?""", songID)
     select = cursor.fetchone()
 
@@ -321,9 +351,7 @@ def makeFav(songID):
         ##buscar en reproduccion y updatear
         cursor.execute("""SELECT id FROM reproduccion WHERE id=?""", songID)
         select2 = cursor.fetchone()
-        if not select2:
-            print("TEST la cancion no está en reproducciones.")
-        else:
+        if select2:
             cursor.execute("""UPDATE reproduccion SET favorito=1 WHERE id=?""", songID)
 
     else:
@@ -338,6 +366,17 @@ def makeFav(songID):
 
 # listo
 def removeFav(songID):
+    """
+    Quita la canción indicada de la lista de favoritos.
+
+    Además, actualiza su estado en la lista reproducciones.
+
+    Parameters
+    ----------
+    songID : int
+        ID de la canción a agregar.
+
+    """
     cursor.execute("""SELECT * FROM lista_favoritos WHERE id=?""", songID)
     print("Estás apunto de eliminar de tus favoritos la cancion:")
     print(cursor.fetchone())
@@ -351,9 +390,7 @@ def removeFav(songID):
 
                 cursor.execute("""SELECT id FROM reproduccion WHERE id=?""", songID)
                 select2 = cursor.fetchone()
-                if not select2:
-                    print("TEST la cancion no está en reproducciones")
-                else:
+                if select2:
                     cursor.execute(
                         """UPDATE reproduccion SET favorito=0 WHERE id=?""", songID
                     )
@@ -365,6 +402,17 @@ def removeFav(songID):
 
 # listo
 def playSong(songID):
+    """
+    "Reproduce" la canción dada.
+
+    Actualiza todos los valores necesarios, además de dar la opción de agregar o quitar la canción de favoritos.
+
+    Parameters
+    ----------
+    songID : int
+        ID de la canción a agregar.
+
+    """
     cursor.execute("""SELECT id FROM reproduccion WHERE id=?""", songID)
     aux = cursor.fetchone()
 
@@ -409,6 +457,17 @@ def playSong(songID):
 
 # listo
 def searchSong():
+    """
+    Permite buscar canciones en el repositorio.
+
+    Permite buscar por nombre de canción y nombre de artista y seleccionar la canción deseada.
+
+    Returns
+    -------
+    songID :
+        ID de la canción seleccionada.
+
+    """
     loop = True
     while True:
         mode = input(
@@ -470,24 +529,51 @@ def searchSong():
 
 # listo?
 def searchSongInPlays(Name):
+    """
+    Permite buscar canciones en la lista de reproducciones del usuario.
+
+    Muestra las canciones y sus datos.
+
+    Parameters
+    ----------
+    Name : str
+        Nombre de la canción a buscar.
+
+    """
     cursor.execute("""SELECT * FROM reproduccion WHERE song_name=?""", Name)
     songs = cursor.fetchall()
     if songs:
         i = 1
-        print(
-            "   Nombre   |   Artista   |   Fecha primera rep.   |   Veces reproducida   |"
-        )
         for song in songs:
-            print(str(i) + ")", song[1], "|", song[2], "|", song[3], "|", song[4])
+            if song[5]:
+                favStr = "Está en favoritos."
+            else:
+                favStr = "No está en favoritos."
+
+            print(
+                f"{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+            )
             i += 1
 
     else:
         print("No se encuentra esa cancion.")
+        # Agregar acciones rápidas (?)
     return
 
 
 # probablemente listo, falta testeo
 def showSongLastDays(date):
+    """
+    Muestra las canciones reproducidas desde la fecha dada.
+
+    Muestra las canciones y sus datos.
+
+    Parameters
+    ----------
+    date : str
+        Fecha desde la cuál se quieren ver las canciones escuchadas.
+
+    """
     cursor.execute(
         """SELECT * FROM reproduccion WHERE fecha_reproduccion >= ?""",
         date,
@@ -495,19 +581,30 @@ def showSongLastDays(date):
     songs = cursor.fetchall()
     if len(songs) >= 1:
         i = 1
-        print(
-            "   Nombre   |   Artista   |   Fecha primera rep.   |   Veces reproducida   |"
-        )
         for song in songs:
-            print(str(i) + ")", song[1], "|", song[2], "|", song[3], "|", song[4])
+            if song[5]:
+                favStr = "Está en favoritos."
+            else:
+                favStr = "No está en favoritos."
+
+            print(
+                f"{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+            )
             i += 1
     else:
-        print("no hay cansione lol douu")
+        print("No has reproducido canciones desde ese día.")
+        # Agregar acciones rápidas (?)
     return
 
 
 # listo
 def searchTop15():
+    """
+    Muestra el top 15 de artistas con mayor cantidad total de veces en que sus canciones han estado en el top 10.
+
+    Muestra cada artista y la cantidad de veces que ha estado en el top.
+
+    """
     cursor.execute("""SELECT TOP 15 * FROM totalTop10 ORDER By timesInTop10 DESC""")
     top = cursor.fetchall()
     i = 1
@@ -519,7 +616,8 @@ def searchTop15():
     choice = input("> ")
     match choice:
         case "1":
-            startMenu()
+            return
+            # Agregar acciones rápidas (?
     return
 
 
