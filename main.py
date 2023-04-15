@@ -17,7 +17,7 @@ try:
             USR_STR = "Benjas\SQLEXPRESS"
         elif usr == 3:
             LOOP = False
-            USR_STR = input("Ingrese el nombre de su server:")
+            USR_STR = input("Ingrese el nombre de su server: ")
         else:
             print("Opción inválida.")
 
@@ -187,7 +187,7 @@ def startMenu():
                             print("Opción inválida.")
 
             case "4":
-                date = input("Ingrese una fecha: ")
+                date = input("Ingrese una fecha (AAAA-MM-DD): ")
                 showSongLastDays(date)
             case "5":
                 searchTop15()
@@ -218,8 +218,8 @@ def showPlays():
     Permite ordenar la lista por fecha o cantidad de reproducciones, y de manera ascendiente o descendiente.
     """
 
-    print("1) Ordenar por fecha")
-    print("2) Ordenar por reproducciones")
+    print("\t1) Ordenar por fecha")
+    print("\t2) Ordenar por reproducciones")
 
     songChoice = input("> ")
     i = 1
@@ -227,7 +227,7 @@ def showPlays():
     match songChoice:
         case "1":
             while True:
-                order = input("\t1)Orden ascendiente\n\t2)Orden descendiente\n> ")
+                order = input("\t1)Orden ascendente\n\t2)Orden descendente\n> ")
                 match order:
                     case "1":
                         order = "ASC"
@@ -250,13 +250,13 @@ def showPlays():
                     favStr = "No está en favoritos."
 
                 print(
-                    f"{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+                    f"\t{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
                 )
                 i += 1
 
         case "2":
             while True:
-                order = input("\t1)Orden ascendiente\n\t2)Orden descendiente\n> ")
+                order = input("\t1)Orden ascendente\n\t2)Orden descendente\n> ")
                 match order:
                     case "1":
                         order = "ASC"
@@ -278,7 +278,7 @@ def showPlays():
                     favStr = "No está en favoritos."
 
                 print(
-                    f"{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+                    f"\t{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
                 )
                 i += 1
 
@@ -554,7 +554,16 @@ def searchSongInPlays(Name):
     else:
         print("No se encuentra esa cancion.")
         # Agregar acciones rápidas (?)
-    return
+
+    while True:
+        print("Acciones Rápidas: 1)Volver al menú principal")
+        choice = input("> ")
+        match choice:
+            case "1":
+                return
+            case other:
+                print("Opción inválida,")
+                continue
 
 
 # probablemente listo, falta testeo
@@ -590,7 +599,16 @@ def showSongLastDays(date):
     else:
         print("No has reproducido canciones desde ese día.")
         # Agregar acciones rápidas (?)
-    return
+
+    while True:
+        print("Acciones Rápidas: 1)Volver al menú principal")
+        choice = input("> ")
+        match choice:
+            case "1":
+                return
+            case other:
+                print("Opción inválida,")
+                continue
 
 
 # listo
@@ -605,16 +623,18 @@ def searchTop15():
     top = cursor.fetchall()
     i = 1
     for artist in top:
-        print(str(i) + ")", artist[0], "-", artist[1])
+        print("\t" + str(i) + ")", artist[0], "-", artist[1])
         i += 1
 
-    print("Acciones Rápidas: 1)Volver al menú principal")
-    choice = input("> ")
-    match choice:
-        case "1":
-            return
-            # Agregar acciones rápidas (?
-    return
+    while True:
+        print("Acciones Rápidas: 1)Volver al menú principal")
+        choice = input("> ")
+        match choice:
+            case "1":
+                return
+            case other:
+                print("Opción inválida,")
+                continue
 
 
 # listo
@@ -685,6 +705,7 @@ def searchAvgPlays():
                     case "1":
                         return
                     case other:
+                        print("Opción inválida,")
                         continue
 
         else:
