@@ -391,10 +391,10 @@ def makeFav(songID):
         ID de la canción a agregar.
 
     """
-    cursor.execute("""SELECT id FROM lista_favoritos WHERE id=?""", songID)
-    select = cursor.fetchone()
+    cursor.execute("""SELECT dbo.checkFavs(?)""", songID)
+    favorito = cursor.fetchone()[0]
 
-    if not select:
+    if not favorito:
         cursor.execute(
             """INSERT INTO lista_favoritos (id, song_name, artist_name, fecha_agregada) SELECT id, song_name, artist_name, GETDATE() FROM repositorio_musica WHERE id=?""",
             songID,
@@ -478,16 +478,11 @@ def playSong(songID):
         artist_name = song[2]
         reprod = 1
         
-        #También se debe buscar en la tabla de favoritos para ver si ya es favorita.
-        cursor.execute("""SELECT id FROM lista_favoritos WHERE id=?""", songID)
-        aux2 = cursor.fetchone()
-        #si no se encuentra en la tabla favoritos entonces favorito=0
-        if aux2 is None:
-            favorito = 0
-        else:
-            favorito = 1
-            
-        #Se insertan los datos de la canción en la tabla reproducción
+        #busca si la cancion está en la tabla favoritos, retorna 0 si no 
+        cursor.execute("""SELECT dbo.checkFavs(?)""", songID)
+        favorito = cursor.fetchone()[0]
+        
+        
         cursor.execute(
             """INSERT INTO reproduccion(id, song_name, artist_name, fecha_reproduccion, veces_reproducida, favorito) VALUES (?,?,?,GETDATE(),?,?)""",
             songID,
