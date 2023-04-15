@@ -1,4 +1,5 @@
 import pyodbc as odbc
+from datetime import datetime
 
 # Conexión inicial con SQL SERVER
 try:
@@ -29,6 +30,34 @@ try:
     cursor = connection.cursor()
 except Exception() as ex:
     print(ex)
+
+
+def isValidDate(date):
+    format = "%Y-%m-%d"
+    res = True
+    now = datetime.now()
+    try:
+        res = bool(
+            bool(datetime.strptime(date, format))
+            and (datetime.strptime(date, "%Y-%m-%d")) <= now
+        )
+    except ValueError:
+        res = False
+    # dateList = date.split("-")
+    # leapYear = True if int(dateList[0]) // 4 == 0 else False
+    # today = date.today()
+    # todayList = today.split("-")
+    # if (len(dateList[0]) != 4) or (int(dateList[0]) > int(todayList[0])):
+    #     return False
+    # elif (
+    #     (int(dateList[1]) > 12)
+    #     or (int(dateList[1]) < 1)
+    #     or (int(dateList[1]) > int(todayList[1]))
+    # ):
+    #     return False
+    # elif dateList[1] == "02" and leapYear and (dateList[2] > 29):
+    #     return
+    return res
 
 
 # listo
@@ -187,8 +216,7 @@ def startMenu():
                             print("Opción inválida.")
 
             case "4":
-                date = input("Ingrese una fecha (AAAA-MM-DD): ")
-                showSongLastDays(date)
+                showSongLastDays()
             case "5":
                 searchTop15()
             case "6":
@@ -218,72 +246,84 @@ def showPlays():
     Permite ordenar la lista por fecha o cantidad de reproducciones, y de manera ascendiente o descendiente.
     """
 
-    print("\t1) Ordenar por fecha")
-    print("\t2) Ordenar por reproducciones")
+    while True:
+        print("\t1) Ordenar por fecha")
+        print("\t2) Ordenar por reproducciones")
 
-    songChoice = input("> ")
-    i = 1
+        songChoice = input("> ")
+        i = 1
 
-    match songChoice:
-        case "1":
-            while True:
-                order = input("\t1)Orden ascendente\n\t2)Orden descendente\n> ")
-                match order:
-                    case "1":
-                        order = "ASC"
-                        break
-                    case "2":
-                        order = "DESC"
-                        break
-                    case other:
-                        print("Opción inválida.")
-                        continue
+        match songChoice:
+            case "1":
+                while True:
+                    order = input("\t1)Orden ascendente\n\t2)Orden descendente\n> ")
+                    match order:
+                        case "1":
+                            order = "ASC"
+                            break
+                        case "2":
+                            order = "DESC"
+                            break
+                        case other:
+                            print("Opción inválida.")
+                            continue
 
-            cursor.execute(
-                f"""SELECT * FROM reproduccion ORDER BY fecha_reproduccion {order}"""
-            )
-            songs = cursor.fetchall()
-            for song in songs:
-                if song[5]:
-                    favStr = "Está en favoritos."
-                else:
-                    favStr = "No está en favoritos."
-
-                print(
-                    f"\t{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+                cursor.execute(
+                    f"""SELECT * FROM reproduccion ORDER BY fecha_reproduccion {order}"""
                 )
-                i += 1
+                songs = cursor.fetchall()
+                if not songs:
+                    print("Lista vacía.")
+                    return
 
-        case "2":
-            while True:
-                order = input("\t1)Orden ascendente\n\t2)Orden descendente\n> ")
-                match order:
-                    case "1":
-                        order = "ASC"
-                        break
-                    case "2":
-                        order = "DESC"
-                        break
-                    case other:
-                        print("Opción inválida.")
-                        continue
-            cursor.execute(
-                f"""SELECT * FROM reproduccion ORDER BY veces_reproducida {order}"""
-            )
-            songs = cursor.fetchall()
-            for song in songs:
-                if song[5]:
-                    favStr = "Está en favoritos."
-                else:
-                    favStr = "No está en favoritos."
+                for song in songs:
+                    if song[5]:
+                        favStr = "Está en favoritos."
+                    else:
+                        favStr = "No está en favoritos."
 
-                print(
-                    f"\t{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+                    print(
+                        f"\t{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+                    )
+                    i += 1
+                break
+
+            case "2":
+                while True:
+                    order = input("\t1)Orden ascendente\n\t2)Orden descendente\n> ")
+                    match order:
+                        case "1":
+                            order = "ASC"
+                            break
+                        case "2":
+                            order = "DESC"
+                            break
+                        case other:
+                            print("Opción inválida.")
+                            continue
+                cursor.execute(
+                    f"""SELECT * FROM reproduccion ORDER BY veces_reproducida {order}"""
                 )
-                i += 1
+                songs = cursor.fetchall()
+                if not songs:
+                    print("Lista vacía.")
+                    return
 
-    if not songs:
-        print("Lista vacía.")
+                for song in songs:
+                    if song[5]:
+                        favStr = "Está en favoritos."
+                    else:
+                        favStr = "No está en favoritos."
+
+                    print(
+                        f"\t{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+                    )
+                    i += 1
+                break
+
+            case other:
+                print("Opción inválida.")
+                continue
 
     while True:
         print("Acciones Rápidas: 1)Buscar en la lista  2)Volver al menú principal")
@@ -484,7 +524,17 @@ def searchSong():
                             # print(song)
                             print("\t" + str(i) + ")", song[2], "-", song[3])
                             i += 1
-                        songnum = int(input("Escriba el numero de la canción: ")) - 1
+
+                        while True:
+                            songnum = (
+                                int(input("Escriba el numero de la canción: ")) - 1
+                            )
+                            if songnum not in range(1, i - 1):
+                                print("Opción inválida.")
+                                continue
+                            else:
+                                break
+
                         print(
                             "Canción seleccionada:",
                             songs[songnum][2],
@@ -510,7 +560,15 @@ def searchSong():
                     for song in songs:
                         print("\t" + str(i) + ")", song[2], "-", song[3])
                         i += 1
-                    songnum = int(input("Escriba el numero de la canción: ")) - 1
+
+                    while True:
+                        songnum = int(input("Escriba el numero de la canción: ")) - 1
+                        if songnum not in range(1, i - 1):
+                            print("Opción inválida.")
+                            continue
+                        else:
+                            break
+
                     print(
                         "Canción seleccionada:",
                         songs[songnum][2],
@@ -553,7 +611,6 @@ def searchSongInPlays(Name):
 
     else:
         print("No se encuentra esa cancion.")
-        # Agregar acciones rápidas (?)
 
     while True:
         print("Acciones Rápidas: 1)Volver al menú principal")
@@ -567,18 +624,23 @@ def searchSongInPlays(Name):
 
 
 # probablemente listo, falta testeo
-def showSongLastDays(date):
+def showSongLastDays():
     """
     Muestra las canciones reproducidas desde la fecha dada.
 
     Muestra las canciones y sus datos.
 
-    Parameters
-    ----------
-    date : str
-        Fecha desde la cuál se quieren ver las canciones escuchadas.
-
     """
+    now = datetime.now()
+
+    while True:
+        date = input("Ingrese una fecha (AAAA-MM-DD): ")
+
+        if isValidDate(date):
+            break
+        else:
+            print("Fecha inválida.")
+
     cursor.execute(
         """SELECT * FROM reproduccion WHERE fecha_reproduccion >= ?""",
         date,
@@ -598,7 +660,6 @@ def showSongLastDays(date):
             i += 1
     else:
         print("No has reproducido canciones desde ese día.")
-        # Agregar acciones rápidas (?)
 
     while True:
         print("Acciones Rápidas: 1)Volver al menú principal")
