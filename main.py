@@ -161,7 +161,7 @@ def startMenu():
     while True:
         print("Menu:")
         print(
-            """\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas.\n\t3)Buscar canción.\n\t4)Escuchadas en los ultimos dias.\n\t5)TOP 15.\n\t6)posicion peak \n\t7)promedio streams \n\t8)Salir"""
+            """\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas.\n\t3)Buscar canción.\n\t4)Escuchadas en los ultimos dias.\n\t5)TOP 15.\n\t6)Posición peak \n\t7)Promedio streams \n\t8)Salir"""
         )
         choice = input("> ")
         match choice:
@@ -192,11 +192,9 @@ def startMenu():
             case "5":
                 searchTop15()
             case "6":
-                name = input("Nombre artista ")
-                searchPeakPos(name)
+                searchPeakPos()
             case "7":
-                name = input("Nombre artista ")
-                searchAvgPlays(name)
+                searchAvgPlays()
             case "8":
                 while True:
                     close = input("\t¿Cerrar Sesión?\n\t[Y/N]\n")
@@ -619,23 +617,79 @@ def searchTop15():
     return
 
 
-def searchPeakPos(name):
-    # CHECKEAR SI EL NOMBRE EXISTE
-    cursor.execute(
-        """SELECT MIN(peak_position), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""",
-        name,
-    )
-    print(cursor.fetchall())
-    return
+# listo
+def searchPeakPos():
+    """
+    Muestra la posición más alta que ha alcanzado el artista en el top.
+
+    En caso de no encontrar el artista, sigue preguntando.
+
+    """
+    while True:
+        name = input("Nombre artista: ")
+        # CHECKEAR SI EL NOMBRE EXISTE
+        cursor.execute(
+            """SELECT artist_name FROM repositorio_musica WHERE artist_name=?""", name
+        )
+        row = cursor.fetchone()
+
+        if row:
+            cursor.execute(
+                """SELECT MIN(peak_position), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""",
+                name,
+            )
+            output = cursor.fetchone()
+            print(f"{output[1]} - Posición más alta: {output[0]}")
+
+            while True:
+                print("Acciones Rápidas: 1)Volver al menú principal")
+                choice = input("> ")
+                match choice:
+                    case "1":
+                        return
+                    case other:
+                        continue
+
+        else:
+            print("No se encuentra el artista.")
+            continue
 
 
-def searchAvgPlays(name):
-    cursor.execute(
-        """SELECT AVG(CAST (total_streams AS BIGINT)), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""",
-        name,
-    )
-    print(cursor.fetchall())
-    return
+# listo
+def searchAvgPlays():
+    """
+    Muestra el promedio de streams del artista.
+
+    En caso de no encontrar el artista, sigue preguntando.
+
+    """
+    while True:
+        name = input("Nombre artista: ")
+
+        cursor.execute(
+            """SELECT artist_name FROM repositorio_musica WHERE artist_name=?""", name
+        )
+        row = cursor.fetchone()
+
+        if row:
+            cursor.execute(
+                """SELECT AVG(CAST (total_streams AS BIGINT)), artist_name FROM repositorio_musica WHERE artist_name=? GROUP BY artist_name""",
+                name,
+            )
+            output = cursor.fetchone()
+            print(f"{output[1]} - Promedio de streams: {output[0]}")
+            while True:
+                print("Acciones Rápidas: 1)Volver al menú principal")
+                choice = input("> ")
+                match choice:
+                    case "1":
+                        return
+                    case other:
+                        continue
+
+        else:
+            print("No se encuentra el artista.")
+            continue
 
 
 def main():
