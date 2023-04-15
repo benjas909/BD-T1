@@ -133,18 +133,18 @@ def initializeDB():
         )
         
         cursor.execute(
-            """CREATE FUNCTION dbo.validateDate (@inputDate VARCHAR(10))
-            RETURNS BIT
-            AS
-            BEGIN
-                DECLARE @result BIT
-                IF @inputDate > GETDATE()
-                    SET @result = 1
-                ELSE
+            """CREATE FUNCTION dbo.checkFavs (@id INT)
+                RETURNS INT
+                AS
+                BEGIN
+                    DECLARE @result INT
                     SET @result = 0
-                RETURN @result
-            END
-            """
+                    
+                    IF EXISTS(SELECT id FROM lista_favoritos WHERE id = @id)
+                        SET @result = 1
+        
+                    RETURN @result
+                END"""
         )
 
     cursor.execute("USE spotUSM")
