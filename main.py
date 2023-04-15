@@ -6,9 +6,7 @@ try:
     LOOP = True
     while LOOP:
         usr = int(
-            input(
-                "¿Quién está usando el programa?\n(1)Pipes \n(2)Benjas\n(3)Otro (UNTESTED)\n> "
-            )
+            input("¿Quién está usando el programa?\n(1)Pipes \n(2)Benjas\n(3)Otro\n> ")
         )
         if usr == 1:
             LOOP = False
@@ -33,6 +31,17 @@ except Exception() as ex:
 
 
 def isValidDate(date):
+    """
+    Verifica si la fecha ingresada es válida.
+
+    Verifica si el formato es correcto, si el año, mes y día son correctos y además, si la fecha es en el futuro.
+
+    Returns
+    -------
+    res : bool
+        Retorna True si la fecha es válida, False si no lo es.
+
+    """
     format = "%Y-%m-%d"
     res = True
     now = datetime.now()
@@ -43,20 +52,7 @@ def isValidDate(date):
         )
     except ValueError:
         res = False
-    # dateList = date.split("-")
-    # leapYear = True if int(dateList[0]) // 4 == 0 else False
-    # today = date.today()
-    # todayList = today.split("-")
-    # if (len(dateList[0]) != 4) or (int(dateList[0]) > int(todayList[0])):
-    #     return False
-    # elif (
-    #     (int(dateList[1]) > 12)
-    #     or (int(dateList[1]) < 1)
-    #     or (int(dateList[1]) > int(todayList[1]))
-    # ):
-    #     return False
-    # elif dateList[1] == "02" and leapYear and (dateList[2] > 29):
-    #     return
+
     return res
 
 
@@ -75,6 +71,7 @@ def initializeDB():
 
     # Si spotUSM no existe, se crea ella y sus tablas, para finalmente cargar los datos a repositorio_musica
     if "spotUSM" not in row:
+        print("Inicializando Base de Datos...")
         cursor.execute("CREATE DATABASE spotUSM")
         cursor.execute("USE spotUSM")
         cursor.execute(
@@ -114,24 +111,12 @@ def initializeDB():
         # Se llama a la función para cargar los datos a la base
         loadIntoDB()
 
-        # cursor.execute(
-        #     """CREATE FUNCTION peakPosInt(@peak_position_time VARCHAR(6))
-        #     RETURNS INT
-        #     AS
-        #     BEGIN
-        #         DECLARE @posStr VARCHAR(3)
-        #         SET @posStr = TRIM(')(x' FROM @peak_position_time);
-        #         DECLARE @posInt INT
-        #         SET @posInt = CONVERT(INT, @posStr)
-        #         RETURN @posInt
-        #     END"""
-        # )
-
         # Creación de la view para uso en la función top15
         cursor.execute(
             """CREATE VIEW totalTop10 AS SELECT artist_name, SUM(top_10) AS timesInTop10 FROM repositorio_musica GROUP BY artist_name"""
         )
-        
+
+        # Función SQL que revisa si la canción está en favoritos y retorna un 1 si es así, o un 0 si no
         cursor.execute(
             """CREATE FUNCTION dbo.checkFavs (@id INT)
                 RETURNS INT
@@ -205,7 +190,7 @@ def startMenu():
     while True:
         print("Menu:")
         print(
-            """\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas.\n\t3)Buscar canción.\n\t4)Escuchadas en los ultimos dias.\n\t5)TOP 15.\n\t6)Posición peak \n\t7)Promedio streams \n\t8)Salir"""
+            """\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas.\n\t3)Buscar canción (Reproducir/Agregar/Quitar Favorito)\n\t4)Escuchadas en los ultimos dias.\n\t5)TOP 15.\n\t6)Posición peak \n\t7)Promedio streams \n\t8)Salir"""
         )
         choice = input("> ")
         match choice:
@@ -240,8 +225,9 @@ def startMenu():
                 searchAvgPlays()
             case "8":
                 while True:
-                    close = input("\t¿Cerrar Sesión?\n\t[Y/N]\n")
+                    close = input("\t¿Cerrar Sesión?\n\t[Y/N]\n> ")
                     if close == "Y" or close == "y":
+                        print("Cerrando Sesión...")
                         return
                     elif close == "N" or close == "n":
                         break
@@ -368,14 +354,19 @@ def showFav():
             print("\t", row[2], "-", row[1])
     else:
         print("No tienes ninguna cancion favorita")
-    print("Acciones Rápidas: 1)Buscar una canción  2)Volver al menú principal")
-    choice = input("> ")
-    match choice:
-        case "1":
-            searchSong()
-        case "2":
-            return
-    return
+
+    while True:
+        print("Acciones Rápidas: 1)Buscar una canción  2)Volver al menú principal")
+        choice = input("> ")
+        match choice:
+            case "1":
+                searchSong()
+                return
+            case "2":
+                return
+            case other:
+                print("Opción inválida.")
+                continue
 
 
 # listo
@@ -409,7 +400,7 @@ def makeFav(songID):
 
     else:
         print("La cancion ya esta en favoritos. ¿Desea quitarla?")
-        rem = input("1)Sí, 2)No\n> ")
+        rem = input("\t1)Sí\n\t2)No\n> ")
         if rem == "1":
             removeFav(songID)
         else:
@@ -431,8 +422,9 @@ def removeFav(songID):
 
     """
     cursor.execute("""SELECT * FROM lista_favoritos WHERE id=?""", songID)
-    print("Estás apunto de eliminar de tus favoritos la cancion:")
-    print(cursor.fetchone())
+    print("Estás a punto de eliminar de tus favoritos la cancion:")
+    song = cursor.fetchone()
+    print("\t" + song[2] + " - " + song[1])
 
     while True:
         selection = input("¿Confirmar?\n\t1)Sí\n\t2)No\n> ")
@@ -466,23 +458,22 @@ def playSong(songID):
         ID de la canción a agregar.
 
     """
-    #se busca si la canción ya ha sido reproducida antes
+    # se busca si la canción ya ha sido reproducida antes
     cursor.execute("""SELECT id FROM reproduccion WHERE id=?""", songID)
     aux = cursor.fetchone()
 
     if not aux:
-        #si la cancion no ha sido reproducida antes, hay que buscar los datos de la canción en el repositorio
+        # si la cancion no ha sido reproducida antes, hay que buscar los datos de la canción en el repositorio
         cursor.execute("""SELECT * FROM repositorio_musica WHERE id=?""", songID)
         song = cursor.fetchone()
         song_name = song[3]
         artist_name = song[2]
         reprod = 1
-        
-        #busca si la cancion está en la tabla favoritos, retorna 0 si no 
+
+        # busca si la cancion está en la tabla favoritos, retorna 0 si no
         cursor.execute("""SELECT dbo.checkFavs(?)""", songID)
         favorito = cursor.fetchone()[0]
-        
-        
+
         cursor.execute(
             """INSERT INTO reproduccion(id, song_name, artist_name, fecha_reproduccion, veces_reproducida, favorito) VALUES (?,?,?,GETDATE(),?,?)""",
             songID,
@@ -492,21 +483,30 @@ def playSong(songID):
             favorito,
         )
     else:
-        #Si la canción ya estaba en reproduccion, solo se aumenta el numero de reproducciones
+        # Si la canción ya estaba en reproduccion, solo se aumenta el numero de reproducciones
         cursor.execute(
             """UPDATE reproduccion SET veces_reproducida=veces_reproducida + 1 WHERE id=?""",
             songID,
         )
+    cursor.execute(
+        """UPDATE repositorio_musica SET total_streams = total_streams + 1 WHERE id=?""",
+        songID,
+    )
 
     print("Reproduciendo...")
-    print("Acciones Rápidas: 1)Agregar a favoritos  2)Volver al menú principal")
-    choice = input("> ")
-    match choice:
-        case "1":
-            makeFav(songID)
-        case "2":
-            return
-    return
+
+    while True:
+        print("Acciones Rápidas: 1)Agregar a favoritos  2)Volver al menú principal")
+        choice = input("> ")
+        match choice:
+            case "1":
+                makeFav(songID)
+                return
+            case "2":
+                return
+            case other:
+                print("Opción inválida.")
+                continue
 
 
 # listo
@@ -545,7 +545,7 @@ def searchSong():
                             songnum = (
                                 int(input("Escriba el numero de la canción: ")) - 1
                             )
-                            if songnum not in range(1, i - 1):
+                            if songnum not in range(i - 1):
                                 print("Opción inválida.")
                                 continue
                             else:
@@ -579,7 +579,7 @@ def searchSong():
 
                     while True:
                         songnum = int(input("Escriba el numero de la canción: ")) - 1
-                        if songnum not in range(1, i - 1):
+                        if songnum not in range(i - 1):
                             print("Opción inválida.")
                             continue
                         else:
@@ -597,7 +597,6 @@ def searchSong():
     return
 
 
-# listo?
 def searchSongInPlays(Name):
     """
     Permite buscar canciones en la lista de reproducciones del usuario.
@@ -639,7 +638,6 @@ def searchSongInPlays(Name):
                 continue
 
 
-# probablemente listo, falta testeo
 def showSongLastDays():
     """
     Muestra las canciones reproducidas desde la fecha dada.
@@ -688,7 +686,6 @@ def showSongLastDays():
                 continue
 
 
-# listo
 def searchTop15():
     """
     Muestra el top 15 de artistas con mayor cantidad total de veces en que sus canciones han estado en el top 10.
@@ -714,7 +711,6 @@ def searchTop15():
                 continue
 
 
-# listo
 def searchPeakPos():
     """
     Muestra la posición más alta que ha alcanzado el artista en el top.
@@ -752,7 +748,6 @@ def searchPeakPos():
             continue
 
 
-# listo
 def searchAvgPlays():
     """
     Muestra el promedio de streams del artista.
