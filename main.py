@@ -466,22 +466,28 @@ def playSong(songID):
         ID de la canción a agregar.
 
     """
+    #se busca si la canción ya ha sido reproducida antes
     cursor.execute("""SELECT id FROM reproduccion WHERE id=?""", songID)
     aux = cursor.fetchone()
 
     if not aux:
+        #si la cancion no ha sido reproducida antes, hay que buscar los datos de la canción en el repositorio
         cursor.execute("""SELECT * FROM repositorio_musica WHERE id=?""", songID)
         song = cursor.fetchone()
         song_name = song[3]
         artist_name = song[2]
         reprod = 1
+        
+        #También se debe buscar en la tabla de favoritos para ver si ya es favorita.
         cursor.execute("""SELECT id FROM lista_favoritos WHERE id=?""", songID)
         aux2 = cursor.fetchone()
+        #si no se encuentra en la tabla favoritos entonces favorito=0
         if aux2 is None:
             favorito = 0
         else:
             favorito = 1
-
+            
+        #Se insertan los datos de la canción en la tabla reproducción
         cursor.execute(
             """INSERT INTO reproduccion(id, song_name, artist_name, fecha_reproduccion, veces_reproducida, favorito) VALUES (?,?,?,GETDATE(),?,?)""",
             songID,
@@ -491,13 +497,13 @@ def playSong(songID):
             favorito,
         )
     else:
+        #Si la canción ya estaba en reproduccion, solo se aumenta el numero de reproducciones
         cursor.execute(
             """UPDATE reproduccion SET veces_reproducida=veces_reproducida + 1 WHERE id=?""",
             songID,
         )
 
     print("Reproduciendo...")
-
     print("Acciones Rápidas: 1)Agregar a favoritos  2)Volver al menú principal")
     choice = input("> ")
     match choice:
