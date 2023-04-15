@@ -1,5 +1,6 @@
 import pyodbc as odbc
 
+# Conexión inicial con SQL SERVER
 try:
     LOOP = True
     while LOOP:
@@ -32,6 +33,12 @@ except Exception() as ex:
 
 # listo
 def initializeDB():
+    """
+    Inicializa la base de datos.
+
+    Si la base no existe, se crean ella, sus tablas, funciones y views, en caso contrario, solo se usa.
+    """
+
     # Query para obtener los nombres de las bases de datos existentes
     cursor.execute("SELECT name FROM master.dbo.sysdatabases")
     rowAux = cursor.fetchall()
@@ -74,6 +81,8 @@ def initializeDB():
                 fecha_agregada DATE
             )"""
         )
+
+        # Se llama a la función para cargar los datos a la base
         loadIntoDB()
 
         # cursor.execute(
@@ -88,6 +97,8 @@ def initializeDB():
         #         RETURN @posInt
         #     END"""
         # )
+
+        # Creación de la view para uso en la función top15
         cursor.execute(
             """CREATE VIEW totalTop10 AS SELECT artist_name, SUM(top_10) AS timesInTop10 FROM repositorio_musica GROUP BY artist_name"""
         )
@@ -99,11 +110,19 @@ def initializeDB():
 
 # listo
 def loadIntoDB():
+    """
+    Carga los datos leídos desde el csv hacia la base de datos.
+
+    Se lee, manipula y carga linea por linea (o canción por canción) el archivo csv.
+    """
+
     inFile = open("song.csv", "r", encoding="utf-8")
     songID = 0
 
+    # Se cambia este ajuste para poder usar comillas dobles y evitar confusión del programa con apóstrofes
     cursor.execute("SET QUOTED_IDENTIFIER OFF")
 
+    # Lectura, manipulación e inserción a la base de datos de cada fila de datos en el archivo csv
     for line in inFile:
         if songID == 0:
             songID += 1
@@ -123,7 +142,7 @@ def loadIntoDB():
 
         insert = f"""INSERT INTO repositorio_musica (id, position, artist_name, song_name, days, top_10, peak_position, peak_position_time, peak_streams, total_streams)
         VALUES ({songID}, "{position}", "{artist_name[:-1]}", "{song_name}", {days}, {top_10}, "{peak_position}", "{peak_position_time}", {peak_streams}, {total_streams});"""
-        # print(insert)
+
         cursor.execute(insert)
         songID += 1
 
@@ -133,6 +152,12 @@ def loadIntoDB():
 
 # listo
 def startMenu():
+    """
+    Menú principal del programa.
+
+    Permite navegar a las diferentes opciones que se ofrecen ingresando el número de opción.
+    """
+
     while True:
         print("Menu:")
         print(
@@ -189,6 +214,12 @@ def startMenu():
 
 # listo
 def showPlays():
+    """
+    Muestra la lista de canciones reproducidas por el usuario.
+
+    Permite ordenar la lista por fecha o cantidad de reproducciones, y de manera ascendiente o descendiente.
+    """
+
     print("1) Ordenar por fecha")
     print("2) Ordenar por reproducciones")
 
@@ -197,15 +228,40 @@ def showPlays():
 
     match songChoice:
         case "1":
+            while True:
+                order = input("\t1)Orden ascendiente\n\t2)Orden descendiente\n> ")
+                match order:
+                    case "1":
+                        order = "ASC"
+                        break
+                    case "2":
+                        order = "DESC"
+                        break
+                    case other:
+                        print("Opción inválida.")
+                        continue
+
             cursor.execute(
-                """SELECT * FROM reproduccion ORDER BY fecha_reproduccion DESC"""
+                f"""SELECT * FROM reproduccion ORDER BY fecha_reproduccion {order}"""
             )
             songs = cursor.fetchall()
             for song in songs:
                 print(str(i) + ")", song[1], "-", song[2], "-", song[3])
         case "2":
+            while True:
+                order = input("\t1)Orden ascendiente\n\t2)Orden descendiente\n> ")
+                match order:
+                    case "1":
+                        order = "ASC"
+                        break
+                    case "2":
+                        order = "DESC"
+                        break
+                    case other:
+                        print("Opción inválida.")
+                        continue
             cursor.execute(
-                """SELECT * FROM reproduccion ORDER BY veces_reproducida DESC"""
+                f"""SELECT * FROM reproduccion ORDER BY veces_reproducida {order}"""
             )
             songs = cursor.fetchall()
             for song in songs:
@@ -367,11 +423,11 @@ def searchSong():
                 songs = cursor.fetchall()
                 if len(songs) != 0:
                     if len(songs) > 1:
-                        print("hay mas de una cancion con ese nombre")
+                        print("Hay más de una cancion con ese nombre.")
                         i = 1
                         for song in songs:
                             # print(song)
-                            print(str(i) + ")", song[2], "-", song[3])
+                            print("\t" + str(i) + ")", song[2], "-", song[3])
                             i += 1
                         songnum = int(input("Escriba el numero de la canción: ")) - 1
                         print(
@@ -430,6 +486,7 @@ def searchSongInPlays(Name):
     return
 
 
+# probablemente listo, falta testeo
 def showSongLastDays(date):
     cursor.execute(
         """SELECT * FROM reproduccion WHERE fecha_reproduccion >= ?""",
@@ -449,6 +506,7 @@ def showSongLastDays(date):
     return
 
 
+# listo
 def searchTop15():
     cursor.execute("""SELECT TOP 15 * FROM totalTop10 ORDER By timesInTop10 DESC""")
     top = cursor.fetchall()
