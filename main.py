@@ -161,7 +161,7 @@ def startMenu():
     while True:
         print("Menu:")
         print(
-            """\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas.\n\t3)Buscar canción.\n\t4)Escuchadas en los ultimos dias.\n\t5)TOP 15 TEST.\n\t6)posicion peak \n\t7)promedio streams \n\t8)Salir"""
+            """\t1)Mostrar canciones reproducidas.\n\t2)Mostrar canciones favoritas.\n\t3)Buscar canción.\n\t4)Escuchadas en los ultimos dias.\n\t5)TOP 15.\n\t6)posicion peak \n\t7)promedio streams \n\t8)Salir"""
         )
         choice = input("> ")
         match choice:
@@ -470,9 +470,7 @@ def searchSong():
     """
     loop = True
     while True:
-        mode = input(
-            "1)Buscar por nombre de canción.\n2)Buscar por artista.\nIngrese una opción: "
-        )
+        mode = input("\t1)Buscar por nombre de canción.\n\t2)Buscar por artista.\n> ")
         match mode:
             case "1":
                 name = input("Nombre de la canción: ")
@@ -512,7 +510,7 @@ def searchSong():
                 if len(songs):
                     i = 1
                     for song in songs:
-                        print(str(i) + ")", song[2], "-", song[3])
+                        print("\t" + str(i) + ")", song[2], "-", song[3])
                         i += 1
                     songnum = int(input("Escriba el numero de la canción: ")) - 1
                     print(
@@ -551,7 +549,7 @@ def searchSongInPlays(Name):
                 favStr = "No está en favoritos."
 
             print(
-                f"{str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
+                f"\t {str(i)}) {song[1]} - {song[2]} | Primera reproducción: {song[3]} | Veces reproducida: {song[4]} | {favStr}"
             )
             i += 1
 
