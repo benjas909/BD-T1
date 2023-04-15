@@ -131,6 +131,21 @@ def initializeDB():
         cursor.execute(
             """CREATE VIEW totalTop10 AS SELECT artist_name, SUM(top_10) AS timesInTop10 FROM repositorio_musica GROUP BY artist_name"""
         )
+        
+        cursor.execute(
+            """CREATE FUNCTION dbo.validateDate (@inputDate VARCHAR(10))
+            RETURNS BIT
+            AS
+            BEGIN
+                DECLARE @result BIT
+                IF @inputDate > GETDATE()
+                    SET @result = 1
+                ELSE
+                    SET @result = 0
+                RETURN @result
+            END
+            """
+        )
 
     cursor.execute("USE spotUSM")
 
